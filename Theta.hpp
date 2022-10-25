@@ -45,6 +45,8 @@ namespace Theta {
 		CHAR = 6,
 		INT = 7,
 		FLOAT = 8,
+        INDENT = 9,
+        EXDENT = 10,
 	};
 	class Token {
 	public:
@@ -55,11 +57,42 @@ namespace Theta {
 			Text = text;
 		}
 	};
-	vector<Token> Tokenize(string incode, string commentstr, bool iscomment2sz, bool usenewline) {
+	vector<Token> Tokenize(string incode, string commentstr, bool iscomment2sz, bool usenewline,
+    bool useindent) {
         line = 1;
 		vector<Token> tokens;
 		int i = 0;
-		while (i < incode.size()) {
+        int oldindent = 0;
+        int newindent = 0;
+		while (true) {
+            if (incode[i-1] == '\n'){
+                // coming from newline
+                newindent = 0;
+                while(incode[i] == '\t' || incode[i] == ' '){
+                    if(incode[i] == '\t'){
+                        newindent += 4; // tab = 4 spaces
+                    }
+                    else{
+                        newindent++;
+                    }
+                    i++;
+                }
+                newindent /= 4;
+                if(newindent > oldindent){
+                    for(int i = 0; i < newindent-oldindent; i++){
+                        tokens.push_back(Token(TokenType::INDENT, ""));
+                    }
+                }
+                else if(oldindent > newindent){
+                    for(int i = 0; i < oldindent-newindent; i++){
+                        tokens.push_back(Token(TokenType::EXDENT, ""));
+                    }
+                }
+                oldindent = newindent;
+            }
+            if (i >= incode.size()){
+                break;
+            }
             if (incode[i] == '\n'){
                 if (usenewline){
                     tokens.push_back(Token(TokenType::NEWLINE, "\n"));

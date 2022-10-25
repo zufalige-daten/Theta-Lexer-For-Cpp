@@ -25,7 +25,7 @@ int main(int argc, char *argv[])
     else{
         cout << "Error, unable to open input file '" << argv[1];
     }
-    vector<Token> tokens = Tokenize(incode, "//", true, true);
+    vector<Token> tokens = Tokenize(incode, "#", false, true, true);
     for (int i = 0; i < tokens.size(); i++) {
         cout << tokens[i].Type << "\t\t\t\t" << tokens[i].Text << endl;
     }

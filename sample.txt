@@ -1,1 +1,9 @@
-prints("i am an example");
+h = input("food: ")
+if h == "j":
+    print("hi")
+    print("aaaaaaaa")
+    if l == i:
+        print("a")
+else:
+    print("a")
+    print("aaaaa")
