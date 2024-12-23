@@ -1,0 +1,4 @@
+bin/test-theta-lexer
+bin/theta-lexer.so
+bin/obj/main.o
+

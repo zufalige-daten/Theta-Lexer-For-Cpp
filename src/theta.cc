@@ -1,71 +1,42 @@
-#pragma once
-
-#ifndef THETA_HPP
-#define THETA_HPP
-
+#include <theta.hh>
+#include <cctype>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <sstream>
 
-using namespace std;
+namespace theta{
+	std::vector<std::string> string_delimiter_split(std::string s, char delimiter){
+		std::vector<std::string> result;
+		std::stringstream ss (s);
+		std::string item;
+	
+	    while (getline (ss, item, delimiter)) {
+	        result.push_back (item);
+	    }
 
-string cts(char chr){
-    string tmp_string;
-    tmp_string.append(1, chr);
-    return tmp_string;
-}
+	    return result;
+	}
 
-bool isalphadigit(char chr){
-    return isalpha(chr) || isdigit(chr);
-}
+	token::token(token_type type, std::string text){
+		this->type = type;
+		this->text = text;
+	}
 
-bool iswhitespace(char chr){
-    return chr == ' ' || chr == '\t';
-}
+	tokenizer::tokenizer(std::string comment_string, tokenizer_flags flags){
+		this->comment_string = comment_string;
+		this->use_newline = flags & USE_NEWLINE;
+		this->use_indent = flags & USE_INDENTATION;
+	}
 
-vector<string> split(const string &s, char delim) {
-    vector<string> result;
-    stringstream ss (s);
-    string item;
-
-    while (getline (ss, item, delim)) {
-        result.push_back (item);
-    }
-    return result;
-}
-
-namespace Theta {
-    int line = 1;
-    enum TokenType {
-		FILEEND = -1,
-		OP = 0,
-		NEWLINE = 1,
-		IDENT = 2,
-		STRING = 5,
-		CHAR = 6,
-		INT = 7,
-		FLOAT = 8,
-        INDENT = 9,
-        EXDENT = 10,
-	};
-	class Token {
-	public:
-		TokenType Type;
-		string Text;
-		Token(TokenType type, string text) {
-			Type = type;
-			Text = text;
-		}
-	};
-	vector<Token> Tokenize(string incode, string commentstr, bool iscomment2sz, bool usenewline,
-    bool useindent) {
-        line = 1;
-		vector<Token> tokens;
+	std::vector<token> tokenizer::tokenize(std::string incode){
+        int line = 1;
+		std::vector<token> tokens;
 		int i = 0;
         int oldindent = 0;
         int newindent = 0;
 		while (true) {
-            if (incode[i-1] == '\n'){
+            if (i > 0 && incode[i-1] == '\n' && this->use_indent){
                 // coming from newline
                 newindent = 0;
                 while(incode[i] == '\t' || incode[i] == ' '){
@@ -80,12 +51,12 @@ namespace Theta {
                 newindent /= 4;
                 if(newindent > oldindent){
                     for(int i = 0; i < newindent-oldindent; i++){
-                        tokens.push_back(Token(TokenType::INDENT, ""));
+                        tokens.push_back(token(token_type::INDENT, ""));
                     }
                 }
                 else if(oldindent > newindent){
                     for(int i = 0; i < oldindent-newindent; i++){
-                        tokens.push_back(Token(TokenType::EXDENT, ""));
+                        tokens.push_back(token(token_type::EXDENT, ""));
                     }
                 }
                 oldindent = newindent;
@@ -94,64 +65,59 @@ namespace Theta {
                 break;
             }
             if (incode[i] == '\n'){
-                if (usenewline){
-                    tokens.push_back(Token(TokenType::NEWLINE, "\n"));
+                if (this->use_newline){
+                    tokens.push_back(token(token_type::NEWLINE, "\n"));
                 }
 			    i++;
                 line++;
             }
-            else if (incode[i] == commentstr[0] && !iscomment2sz){
-                while (incode[i] != '\n'){
-                    i++;
-                }
-            }
-            else if (incode[i] == commentstr[0] && incode[i+1] == commentstr[1] && iscomment2sz){
-                while (incode[i] != '\n'){
-                    i++;
-                }
-            }
-            else if (iswhitespace(incode[i])){
+			else if (strncmp(&incode.data()[i], comment_string.data(), comment_string.size()) == 0){
+				while (incode[i] != '\n' && i < incode.size()){
+					i++;
+				}
+			}
+            else if (incode[i] == ' ' || incode[i] == '\t'){
 			    i++;
             }
             else if (isalpha(incode[i])){
-                string outstr = "";
-                while (isalphadigit(incode[i]) || incode[i] == '_' || incode[i] == '.'){
-                    outstr += cts(incode[i]);
+				std::string outstr = "";
+                while (isalnum(incode[i]) || incode[i] == '_' || incode[i] == '.'){
+                    outstr += incode[i];
                     i++;
                 }
-                tokens.push_back(Token(TokenType::IDENT, outstr));
+                tokens.push_back(token(token_type::IDENT, outstr));
             }
             else if (incode[i] == '0' && toupper(incode[i+1]) == 'X'){
                 i += 2;
-                string outstr = "0x";
+				std::string outstr = "0x";
                 while (isxdigit(incode[i])){
-                    outstr += cts(incode[i]);
+                    outstr += incode[i];
                     i++;
                 }
-                tokens.push_back(Token(TokenType::INT, outstr));
+                tokens.push_back(token(token_type::INT, outstr));
             }
             else if (isdigit(incode[i])){
-                string outstr = "";
+                std::string outstr = "";
                 while (isdigit(incode[i])){
-                    outstr += cts(incode[i]);
+                    outstr += incode[i];
                     i++;
                 }
                 if (incode[i] == '.'){
                     outstr += ".";
                     i++;
                     while (isdigit(incode[i])){
-                        outstr += cts(incode[i]);
+                        outstr += incode[i];
                         i++;
                     }
-                    tokens.push_back(Token(TokenType::FLOAT, outstr));
+                    tokens.push_back(token(token_type::FLOAT, outstr));
                 }
                 else{
-                    tokens.push_back(Token(TokenType::INT, outstr));
+                    tokens.push_back(token(token_type::INT, outstr));
                 }
             }
             else if (incode[i] == '"'){
                 i++;
-                string outstr = "\"";
+                std::string outstr = "\"";
                 while (incode[i] != '"' && i != incode.size()){
                     if (incode[i] == '\\'){
                         i++;
@@ -172,18 +138,18 @@ namespace Theta {
                             i++;
                         }
                         else{
-                            outstr += cts(incode[i]);
+                            outstr += incode[i];
                             i++;
                         }
                     }
                     else{
-                        outstr += cts(incode[i]);
+                        outstr += incode[i];
                         i++;
                     }
                 }
                 outstr += "\"";
                 i++;
-                tokens.push_back(Token(TokenType::STRING, outstr));
+                tokens.push_back(token(token_type::STRING, outstr));
             }
             else if ((incode[i] == '+' && (incode[i+1] == '+' || incode[i+1] == '=')) ||
                 (incode[i] == '-' && (incode[i+1] == '-' || incode[i+1] == '=')) ||
@@ -193,13 +159,13 @@ namespace Theta {
                 (incode[i] == '&' && incode[i+1] == '&') ||
                 (incode[i] == '<' && (incode[i+1] == '=' || incode[i+1] == '<')) ||
                 (incode[i] == '>' && (incode[i+1] == '=' || incode[i+1] == '>'))){
-                string outstr = cts(incode[i]) + cts(incode[i+1]);
+                std::string outstr = incode[i] + std::string().append(1, incode[i+1]);
                 i += 2;
-                tokens.push_back(Token(TokenType::OP, outstr));
+                tokens.push_back(token(token_type::OP, outstr));
             }
             else if (incode[i] == '\''){
                 i++;
-                string outstr = "'";
+                std::string outstr = "'";
                 while (incode[i] != '\'' && i != incode.size()){
                     if (incode[i] == '\\'){
                         i++;
@@ -220,27 +186,26 @@ namespace Theta {
                             i++;
                         }
                         else{
-                            outstr += cts(incode[i]);
+                            outstr += incode[i];
                             i++;
                         }
                     }
                     else{
-                        outstr += cts(incode[i]);
+                        outstr += incode[i];
                         i++;
                     }
                 }
                 outstr += "'";
                 i++;
-                tokens.push_back(Token(TokenType::CHAR, outstr));
+                tokens.push_back(token(token_type::CHAR, outstr));
             }
             else{
-                tokens.push_back(Token(TokenType::OP, cts(incode[i])));
+                tokens.push_back(token(token_type::OP, std::string().append(1, incode[i])));
 			    i++;
             }
 		}
-		tokens.push_back(Token(TokenType::FILEEND, ""));
+		tokens.push_back(token(token_type::FILEEND, ""));
 		return tokens;
 	}
 }
 
-#endif
