@@ -22,7 +22,11 @@ int main(int argc, char *argv[])
     else{
 		std::cout << "Error: Unable to open input file '" << argv[1] << "'.\n";
     }
-	theta::tokenizer tokenizer("#", theta::USE_NONE);
+	theta::tokenizer tokenizer;
+	tokenizer.configure_newlines(false);
+	tokenizer.configure_indentations(false);
+	tokenizer.configure_comments_singular_line(true, "//");
+	tokenizer.configure_comments_many_lines(true, "/*", "*/");
 	std::vector<theta::token> tokens = tokenizer.tokenize(incode);
     for (int i = 0; i < tokens.size(); i++) {
 		std::cout << tokens[i].type << "\t\t\t\t" << tokens[i].text << "\n";

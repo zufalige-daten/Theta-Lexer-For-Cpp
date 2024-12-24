@@ -23,10 +23,30 @@ namespace theta{
 		this->text = text;
 	}
 
-	tokenizer::tokenizer(std::string comment_string, tokenizer_flags flags){
-		this->comment_string = comment_string;
-		this->use_newline = flags & USE_NEWLINE;
-		this->use_indent = flags & USE_INDENTATION;
+	tokenizer::tokenizer(){
+		this->use_many_lines_comments = false;
+		this->use_single_line_comments = false;
+		this->use_newline = false;
+		this->use_indent = false;
+	}
+
+	void tokenizer::configure_newlines(bool enabled){
+		this->use_newline = enabled;
+	}
+
+	void tokenizer::configure_indentations(bool enabled){
+		this->use_indent = enabled;
+	}
+
+	void tokenizer::configure_comments_singular_line(bool enabled, std::string comment_start_string){
+		this->use_single_line_comments = enabled;
+		this->comment_string = comment_start_string;
+	}
+
+	void tokenizer::configure_comments_many_lines(bool enabled, std::string comment_begin_string, std::string comment_end_string){
+		this->use_many_lines_comments = enabled;
+		this->cb_string = comment_begin_string;
+		this->ce_string = comment_end_string;
 	}
 
 	std::vector<token> tokenizer::tokenize(std::string incode){
@@ -71,9 +91,20 @@ namespace theta{
 			    i++;
                 line++;
             }
-			else if (strncmp(&incode.data()[i], comment_string.data(), comment_string.size()) == 0){
+			else if (this->use_single_line_comments && strncmp(&incode.data()[i], this->comment_string.data(), this->comment_string.size()) == 0){
 				while (incode[i] != '\n' && i < incode.size()){
 					i++;
+				}
+			}
+			else if (this->use_many_lines_comments && strncmp(&incode.data()[i], this->cb_string.data(), this->cb_string.size()) == 0){
+				while (strncmp(&incode.data()[i], this->ce_string.data(), this->ce_string.size()) != 0 && i < incode.size()){
+					i++;
+				}
+				if(i + this->ce_string.size() >= incode.size()){
+					i = incode.size();
+				}
+				else{
+					i += this->ce_string.size();
 				}
 			}
             else if (incode[i] == ' ' || incode[i] == '\t'){

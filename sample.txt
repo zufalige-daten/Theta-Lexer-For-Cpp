@@ -1,8 +1,16 @@
 h = input("food: ")
-# wefwef
+// wefwef
 if h == "j":
     print("hi")
-    print("aaaaaaaa") # fweffwe
+    print("aaaaaaaa") /*
+erfger
+getlinerg
+elseg
+gh
+resultth
+resultthr
+rthrthr
+*/
     if l == i:
         print("a")
 else:

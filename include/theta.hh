@@ -9,12 +9,6 @@
 namespace theta{
 	std::vector<std::string> string_delimiter_split(std::string s, char delimiter);
 
-	enum tokenizer_flags{
-		USE_NONE = 0,
-		USE_NEWLINE = 1 << 0,
-		USE_INDENTATION = 1 << 1,
-	};
-
 	enum token_type{
 		FILEEND, OP, NEWLINE, IDENT, STRING, CHAR, INT, FLOAT, INDENT, EXDENT,
 	};
@@ -30,11 +24,21 @@ namespace theta{
 	class tokenizer{
 	private:
 		std::string comment_string;
+		std::string cb_string;
+		std::string ce_string;
 		bool use_newline;
 		bool use_indent;
+		bool use_single_line_comments;
+		bool use_many_lines_comments;
 
 	public:
-		tokenizer(std::string comment_string, tokenizer_flags flags);
+		void configure_newlines(bool enabled);
+
+		void configure_indentations(bool enabled);
+
+		void configure_comments_singular_line(bool enabled, std::string comment_start_string);
+
+		void configure_comments_many_lines(bool enabled, std::string comment_begin_string, std::string comment_end_string);
 
 		tokenizer();
 
